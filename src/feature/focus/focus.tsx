@@ -42,14 +42,17 @@ export function FocusManager(props: PropsWithChildren) {
     const hasPrevious = (currentlyFocusedID ?? 0) > 0;
 
     const registerFocusable = useCallback((id: string) => {
-        setFocusKeys((prev) => [...prev, id]);
+        setFocusKeys((prev) => {
+            if (prev.includes(id)) throw new Error('focusId has to be unique!');
+            return [...prev, id];
+        });
 
         return () => {
             setFocusKeys((prev) => prev.filter((pid) => pid !== id));
         };
     }, []);
 
-    const focus = useCallback((rule: FocusUpdateRule) => {
+    const focus = (rule: FocusUpdateRule) => {
         setCurrentlyFocusedID((idx) => {
             const newIdx = rule(idx, [...focusKeys]);
             if (newIdx === null) return null;
@@ -58,7 +61,8 @@ export function FocusManager(props: PropsWithChildren) {
             }
             return null;
         });
-    }, []);
+    };
+
 
     const state: FocusManagerChildContextType = useMemo(() => {
         return ({

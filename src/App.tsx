@@ -14,7 +14,7 @@ const BackButton = focusAction(({focus, hasPrevious}) => (
     </button>
 ));
 
-const NextButton = focusAction(({focus, hasNext}) =>(
+const NextButton = focusAction(({focus, hasNext}) => (
     <button onClick={() => focus(focusNextId)}
         disabled={!hasNext}>Next
     </button>
@@ -77,7 +77,7 @@ const App = () => {
                     <div>other me 5</div>
                 </Highlight>
                 <button
-                    onClick={() => setRunAnimation((previous) => !previous)}>{runAnimation ? 'Stop animation' : 'start animation'}</button>
+                    onClick={() => setRunAnimation((previous) => !previous)}>{runAnimation ? 'Stop animation' : 'Start animation'}</button>
                 <StartTour/>
                 <EndTour/>
                 <AnimateTour active={runAnimation}/>

@@ -1,3 +1,25 @@
+# About
+Just a small experiment to make a "component" focusable. App.tsx contains a demo and the actual code is under feature/focus.
+
+There are 3 parts. 
+ - FocusManager
+ - focusAction
+ - focusableComponent
+
+## FocusManager
+Handles the state and provides the context for components. A component (de)-registeres itself with a key. That key should be unique.
+
+# focusAction
+A HoC that mainly provides a function `focus: (updateRule) => void`. 
+This function can be used to dictate the next idx when clicked. 
+Use this to build actions that change the state.
+
+# focusableComponent
+A HoC that provides a component a `inFocus: boolean` property. 
+
+
+# -----------------------
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
