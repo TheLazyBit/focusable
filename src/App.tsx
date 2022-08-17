@@ -76,8 +76,9 @@ const App = () => {
                 <Highlight focusId={'fifth'}>
                     <div>other me 5</div>
                 </Highlight>
-                <button
-                    onClick={() => setRunAnimation((previous) => !previous)}>{runAnimation ? 'Stop animation' : 'Start animation'}</button>
+                <button onClick={() => setRunAnimation((previous) => !previous)}>
+                    {runAnimation ? 'Stop animation' : 'Start animation'}
+                </button>
                 <StartTour/>
                 <EndTour/>
                 <AnimateTour active={runAnimation}/>
