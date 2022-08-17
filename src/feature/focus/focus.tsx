@@ -8,6 +8,9 @@ import React, {
     useState
 } from 'react';
 
+/**
+ * Either the current index of the focused key from "allKeys" or null if nothing is in focus.
+ */
 export type FocusIndexType = number | null
 export type FocusUpdateRule = (idx: FocusIndexType, allKeys: string[]) => FocusIndexType
 
@@ -15,39 +18,36 @@ type FocusManagerChildContextType = {
     currentlyFocused: string | null,
     registerFocusable: (id: string) => () => void,
     focus: (updateRule: FocusUpdateRule) => void,
+    hasNext: boolean,
+    hasPrevious: boolean,
 }
 const FocusManagerChildContext = createContext<FocusManagerChildContextType>(
     undefined as unknown as FocusManagerChildContextType
 );
 
+/**
+ * Provides a context for the Focus components.
+ * Focus components register themselves with a focusId,
+ * this id must be unique for that manager instance.
+ */
 export function FocusManager(props: PropsWithChildren) {
     const {children} = props;
-    const [focusKeys] = useState<string[]>([]); // mutable to prevent endless render loop
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, setTouch] = useState(0); // just used as a rerender trigger since focusKeys is mutable
+    const [focusKeys, setFocusKeys] = useState<string[]>([]);
     const [currentlyFocusedID, setCurrentlyFocusedID] = useState<FocusIndexType>(null);
+
     const currentlyFocused = currentlyFocusedID !== null
         ? focusKeys[currentlyFocusedID]
         : null;
+    const hasNext = (currentlyFocusedID ?? -1) < focusKeys.length - 1;
+    const hasPrevious = (currentlyFocusedID ?? 0) > 0;
 
     const registerFocusable = useCallback((id: string) => {
-        if (focusKeys.includes(id)) throw new Error('You can\'t register the same key multiple times as a focusable!');
-        focusKeys.push(id);
-        setTouch((prev) => prev + 1 % 1000);
+        setFocusKeys((prev) => [...prev, id]);
 
         return () => {
-            // There doesn't seem to be a direct way of mutably removing an element from an array
-            // therefore we create a temporary filtered array
-            // clear the original and fill it again with the temporary values
-            const tmp = focusKeys.filter((pid) => pid !== id);
-            while (focusKeys.length > 0) {
-                focusKeys.pop();
-            }
-            tmp.forEach((elem) => focusKeys.push(elem));
-
-            setTouch((prev) => prev + 1 % 1000);
+            setFocusKeys((prev) => prev.filter((pid) => pid !== id));
         };
-    }, [focusKeys]);
+    }, []);
 
     const focus = useCallback((rule: FocusUpdateRule) => {
         setCurrentlyFocusedID((idx) => {
@@ -58,28 +58,37 @@ export function FocusManager(props: PropsWithChildren) {
             }
             return null;
         });
-    }, [focusKeys]);
-
+    }, []);
 
     const state: FocusManagerChildContextType = useMemo(() => {
-        return ({currentlyFocused, registerFocusable, focus});
-    }, [currentlyFocused, focus, registerFocusable]);
+        return ({
+            currentlyFocused,
+            registerFocusable,
+            focus,
+            hasNext,
+            hasPrevious,
+        });
+    }, [currentlyFocused, focus, registerFocusable, hasNext, hasPrevious]);
 
     return <FocusManagerChildContext.Provider value={state}>
         {children}
     </FocusManagerChildContext.Provider>;
 }
 
-export type FocusActionProps = { focus: (updateRule: FocusUpdateRule) => void }
+export type FocusActionProps = {
+    focus: (updateRule: FocusUpdateRule) => void,
+    hasNext: boolean,
+    hasPrevious: boolean,
+}
 
-export function asFocusAction<T extends FocusActionProps>(
+export function focusAction<T extends FocusActionProps>(
     WrappedComponent: React.ComponentType<T>
 ) {
     const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
     function FocusAction(props: Omit<T, keyof FocusActionProps>) {
-        const {focus} = useContext(FocusManagerChildContext);
-        return <WrappedComponent {...props as T} focus={focus}/>;
+        const {focus, hasPrevious, hasNext} = useContext(FocusManagerChildContext);
+        return <WrappedComponent {...props as T} focus={focus} hasNext={hasNext} hasPrevious={hasPrevious}/>;
     }
 
     FocusAction.displayName = `asFocusAction(${displayName})`;
@@ -87,10 +96,12 @@ export function asFocusAction<T extends FocusActionProps>(
     return FocusAction;
 }
 
-export type WithFocusProps = { isInFocus: boolean }
+export type WithFocusProps = {
+    isInFocus: boolean
+}
 type WithFocusHoCProps = { focusId: string }
 
-export function withFocus<T extends WithFocusProps>(
+export function focusableComponent<T extends WithFocusProps>(
     WrappedComponent: React.ComponentType<T>,
 ) {
     const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';

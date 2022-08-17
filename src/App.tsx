@@ -1,39 +1,88 @@
-import React, {ReactNode} from 'react';
+import React, {ReactNode, useEffect, useState} from 'react';
 import {
     FocusManager,
-    withFocus,
+    focusableComponent,
     focusNextId,
-    focusPreviousId, asFocusAction,
+    focusPreviousId,
+    focusAction,
+    FocusActionProps,
 } from './feature/focus';
 
-const H1 = withFocus((props: { isInFocus: boolean, children: ReactNode }) => <h1 className={props.isInFocus ? 'focus-content' : ''}>
-    {props.children}
-</h1>);
-const H2 = withFocus((props: { isInFocus: boolean, children: ReactNode }) => <h2 className={props.isInFocus ? 'focus-content' : ''}>
-    {props.children}
-</h2>);
+const BackButton = focusAction(({focus, hasPrevious}) => (
+    <button onClick={() => focus(focusPreviousId)}
+        disabled={!hasPrevious}>Back
+    </button>
+));
 
-const BackButton = asFocusAction(({ focus }) => <button onClick={() => focus(focusPreviousId)}>Back</button> );
-const NextButton = asFocusAction(({ focus }) => <button onClick={() => focus(focusNextId)}>Next</button> );
+const NextButton = focusAction(({focus, hasNext}) =>(
+    <button onClick={() => focus(focusNextId)}
+        disabled={!hasNext}>Next
+    </button>
+));
 
-const App = () => { 
-    return (
-        <FocusManager>
-            <H1 focusId={'me-content'}>
-        Test
-            </H1>
+const StartTour = focusAction(({focus}) => (
+    <button onClick={() => focus(() => 0)}>Start</button>
+));
+
+const EndTour = focusAction(({focus}) => (
+    <button onClick={() => focus(() => null)}>End</button>
+));
+
+const Highlight = focusableComponent((props: { isInFocus: boolean, children: ReactNode }) => {
+    return <div>
+        <div>
+            {props.children}
+        </div>
+        {
+            props.isInFocus &&
             <div>
-                <H2 focusId={'some-other'}>
-                    <div>other me</div>
-                </H2>
-                <H2 focusId={'some-other-2'}>
-                    <div>other me2</div>
-                </H2>
+                <BackButton/>
+                <NextButton/>
             </div>
+        }
+    </div>;
+});
 
-            <BackButton />
-            <NextButton />
-        </FocusManager>
+
+type AnimateTourProps = FocusActionProps & { active: boolean }
+const AnimateTour = focusAction((props: AnimateTourProps) => {
+    useEffect(
+        () => {
+            if (props.active) {
+                const interval = setInterval(() => props.focus(focusNextId), 200);
+                return () => clearInterval(interval);
+            }
+        }, [props.active]);
+    return null;
+});
+
+const App = () => {
+    const [runAnimation, setRunAnimation] = useState(false);
+    return (
+        <div style={{background: 'gray'}}>
+            <FocusManager>
+                <Highlight focusId={'first'}>
+                    <div>other me 1</div>
+                </Highlight>
+                <Highlight focusId={'second'}>
+                    <div>other me 2</div>
+                </Highlight>
+                <Highlight focusId={'third'}>
+                    <div>other me 3</div>
+                </Highlight>
+                <Highlight focusId={'fourth'}>
+                    <div>other me 4</div>
+                </Highlight>
+                <Highlight focusId={'fifth'}>
+                    <div>other me 5</div>
+                </Highlight>
+                <button
+                    onClick={() => setRunAnimation((previous) => !previous)}>{runAnimation ? 'Stop animation' : 'start animation'}</button>
+                <StartTour/>
+                <EndTour/>
+                <AnimateTour active={runAnimation}/>
+            </FocusManager>
+        </div>
     );
 };
 
