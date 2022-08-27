@@ -1,4 +1,5 @@
 import React, {
+    ComponentType,
     createContext,
     PropsWithChildren,
     useCallback,
@@ -79,20 +80,19 @@ export function FocusManager(props: PropsWithChildren) {
     </FocusManagerChildContext.Provider>;
 }
 
-export type FocusActionProps = {
+export type FocusActionProps<T> = T & {
     focus: (updateRule: FocusUpdateRule) => void,
     hasNext: boolean,
     hasPrevious: boolean,
 }
-
-export function focusAction<T extends FocusActionProps>(
-    WrappedComponent: React.ComponentType<T>
-) {
+export function focusAction<T>(
+    WrappedComponent: React.ComponentType<FocusActionProps<T>>
+): ComponentType<T> {
     const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
-    function FocusAction(props: Omit<T, keyof FocusActionProps>) {
+    function FocusAction(props: T) {
         const {focus, hasPrevious, hasNext} = useContext(FocusManagerChildContext);
-        return <WrappedComponent {...props as T} focus={focus} hasNext={hasNext} hasPrevious={hasPrevious}/>;
+        return <WrappedComponent {...props} focus={focus} hasNext={hasNext} hasPrevious={hasPrevious}/>;
     }
 
     FocusAction.displayName = `asFocusAction(${displayName})`;
@@ -100,28 +100,27 @@ export function focusAction<T extends FocusActionProps>(
     return FocusAction;
 }
 
-export type WithFocusProps = {
-    isInFocus: boolean
-}
-type WithFocusHoCProps = { focusId: string }
-
-export function focusableComponent<T extends WithFocusProps>(
-    WrappedComponent: React.ComponentType<T>,
-) {
+export type WithFocusProps<T> = T & { isInFocus: boolean }
+type FocusableParams<T> = T & { focusId: string }
+export function focusableComponent<T>(
+    WrappedComponent: React.ComponentType<WithFocusProps<T>>,
+): ComponentType<FocusableParams<T>> {
     const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
 
-    function ComponentWithFocus(props: Omit<T & WithFocusHoCProps, keyof WithFocusProps>) {
+    function ComponentWithFocus(props: FocusableParams<T>) {
         const {focusId} = props;
         const {currentlyFocused, registerFocusable} = useContext(FocusManagerChildContext);
+        const localProps = {...props} as T & Partial<FocusableParams<T>>;
+        delete localProps['focusId'];
 
         useEffect(() => {
             return registerFocusable(focusId);
         }, [focusId, registerFocusable]);
 
-        return <WrappedComponent {...(props as T)} isInFocus={currentlyFocused === focusId}/>;
+        return <WrappedComponent {...localProps} isInFocus={currentlyFocused === focusId}/>;
     }
 
-    ComponentWithFocus.displayName = `withFocus(${displayName})`;
+    ComponentWithFocus.displayName = `asFocusable(${displayName})`;
 
     return ComponentWithFocus;
 }

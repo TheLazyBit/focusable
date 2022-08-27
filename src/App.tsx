@@ -5,7 +5,7 @@ import {
     focusNextId,
     focusPreviousId,
     focusAction,
-    FocusActionProps,
+    FocusActionProps, WithFocusProps,
 } from './feature/focus';
 
 const BackButton = focusAction(({focus, hasPrevious}) => (
@@ -28,7 +28,7 @@ const EndTour = focusAction(({focus}) => (
     <button onClick={() => focus(() => null)}>End</button>
 ));
 
-const Highlight = focusableComponent((props: { isInFocus: boolean, children: ReactNode }) => {
+const Highlight = focusableComponent((props: WithFocusProps<{ children: ReactNode }>) => {
     return <div>
         <div>
             {props.children}
@@ -44,7 +44,7 @@ const Highlight = focusableComponent((props: { isInFocus: boolean, children: Rea
 });
 
 
-type AnimateTourProps = FocusActionProps & { active: boolean }
+type AnimateTourProps = FocusActionProps<{ active: boolean }>
 const AnimateTour = focusAction((props: AnimateTourProps) => {
     useEffect(
         () => {
