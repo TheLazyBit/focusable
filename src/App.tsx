@@ -49,9 +49,7 @@ const Highlight = focusableComponent((props: WithFocusProps<{ children: ReactNod
     </div>;
 });
 
-
-type AnimateTourProps = FocusActionProps<{ active: boolean }>
-const AnimateTour = focusAction((props: AnimateTourProps) => {
+const AnimateTour = focusAction((props: FocusActionProps<{ active: boolean }>) => {
     useEffect(
         () => {
             if (props.active) {
