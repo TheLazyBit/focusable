@@ -9,14 +9,20 @@ import {
 } from './feature/focus';
 
 const BackButton = focusAction(({focus, hasPrevious}) => (
-    <button onClick={() => focus(focusPreviousId)}
-        disabled={!hasPrevious}>Back
+    <button
+        onClick={() => focus(focusPreviousId)}
+        disabled={!hasPrevious}
+    >
+        Back
     </button>
 ));
 
 const NextButton = focusAction(({focus, hasNext}) => (
-    <button onClick={() => focus(focusNextId)}
-        disabled={!hasNext}>Next
+    <button
+        onClick={() => focus(focusNextId)}
+        disabled={!hasNext}
+    >
+        Next
     </button>
 ));
 
